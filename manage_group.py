@@ -6,14 +6,15 @@
 
 import requests
 import json
-
+import xlsxwriter
+from csv_header import *
 # Constants
 GRAPH_URL_PREFIX = 'https://graph.facebook.com/'
-FIELDS_CONJ = '?fields='
+FIELDS_CONJ = '?limit=1000&fields='
 GROUPS_SUFFIX = '/groups'
 GROUP_FIELDS = 'id,name,members,privacy,description,updated_time'
 MEMBERS_SUFFIX = '/members'
-MEMBER_FIELDS = 'email,id,administrator'
+MEMBER_FIELDS = 'email,name,id'
 JSON_KEY_DATA = 'data'
 JSON_KEY_PAGING = 'paging'
 JSON_KEY_NEXT = 'next'
@@ -59,15 +60,16 @@ def createNewGroup(access_token, name, description, privacy, administrator=None)
 
 def getPagedData(access_token, endpoint, data):
     headers = buildHeader(access_token)
-    result = requests.get(endpoint,headers=headers)
-    result_json = json.loads(result.text, result.encoding)
-    json_keys = result_json.keys()
-    if JSON_KEY_DATA in json_keys and len(result_json[JSON_KEY_DATA]):
-        data.extend(result_json[JSON_KEY_DATA])
-    if JSON_KEY_PAGING in json_keys and JSON_KEY_NEXT in result_json[JSON_KEY_PAGING]:
-        next = result_json[JSON_KEY_PAGING][JSON_KEY_NEXT]
-        if next:
-            getPagedData(access_token, next, data)
+    next = endpoint
+    while next:
+        result = requests.get(next, headers=headers)
+        result_json = json.loads(result.text)
+        json_keys = result_json.keys()
+        if JSON_KEY_DATA in json_keys and len(result_json[JSON_KEY_DATA]):
+            data.extend(result_json[JSON_KEY_DATA])
+        if JSON_KEY_PAGING in json_keys and JSON_KEY_NEXT in result_json[JSON_KEY_PAGING]:
+            next = result_json[JSON_KEY_PAGING][JSON_KEY_NEXT]
+        else: next = False
     return data
 
 def getUserIDFromEmail(access_token, community_id, email):
@@ -80,31 +82,20 @@ def getUserIDFromEmail(access_token, community_id, email):
 def buildHeader(access_token):
     return {'Authorization': 'Bearer ' + access_token}
 
+def exportGroupMemgers(filename, data):
+    workbook = xlsxwriter.Workbook(filename)
+    worksheet = workbook.add_worksheet()
+    row = 0
+    col = 0
+    worksheet.write_row(row, col, tuple(GROUP_HEADER))
+    for i in data:
+        row += 1
+        row_data = [i['name'], i['email'], i['id']]
+        worksheet.write_row(row, col, tuple(row_data))
+    workbook.close()
+
 # Example of creating a CSV of group members
-access_token = raw_input('Enter your access token: ')
-community_id = raw_input('Enter your community ID: ')
-groupid = raw_input('Enter your group ID: ')
+access_token = ''
+community_id = ''
+group_id = ''
 grouplist = getGroupMembers(access_token, group_id)
-
-# Example of creating a new group and adding an admin by email
-#access_token = raw_input('Enter your access token: ')
-#community_id = raw_input('Enter your community ID: ')
-#name = raw_input('Choose a group name: ')
-#description = raw_input('Choose a group description: ')
-#privacy = raw_input('Specify a privacy level (CLOSED | OPEN | SECRET): ')
-#administrator_email = raw_input('Specify an administrator by email: ')
-#member_email = raw_input('Specify a member by email: ')
-#administrator_id = getUserIDFromEmail(access_token, community_id, administrator_email)
-
-#if administrator_id:
-#    result = createNewGroup(access_token, name, description, privacy, administrator_id)
-#    if "id" in result:
-#        print "Group created with ID " + result["id"]
-#    if "error" in result:
-#        print "Error creating group: " + result["error"]["message"]
-#    group_id = result["id"]
-#    result = addMemberToGroup(access_token, group_id, member_email)
-#    if result["success"]:
-#        print member_email + " was added to the group"
-#    else:
-#        print "Error adding " + member_email + " to the group"

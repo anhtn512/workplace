@@ -224,7 +224,7 @@ def getColumnVal(row, column_name):
 	return None
 
 def getParams(command, filename):
-	access_token = raw_input(ACCESS_TOKEN_INPUT_PROMPT)
+	access_token = input(ACCESS_TOKEN_INPUT_PROMPT)
 	if not access_token:
 		print(ERROR_MISSING_ACCESS_TOKEN)
 		return

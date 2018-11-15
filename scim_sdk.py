@@ -77,11 +77,11 @@ def getHeaders(access_token):
 
 #create user
 def createUser(scim_url, access_token, user_obj):
-	print CREATING_USER_PROMPT + user_obj.get(csv_header.EMAIL_HEADER, None)
+	print (CREATING_USER_PROMPT + user_obj.get(csv_header.EMAIL_HEADER, None))
 	url = scim_url + USERS_RESOURCE_SUFFIX
 	data = getCreatJSON(user_obj)
 	result = requests.post(url, headers=getHeaders(access_token), data=data)
-	print str(result.status_code) + RESULT_STATUS_DELIM + result.reason
+	print (str(result.status_code) + RESULT_STATUS_DELIM + result.reason)
 	return result.status_code == RESPONSE_CREATED
 
 def getCreatJSON(user_obj):
@@ -92,33 +92,33 @@ def getCreatJSON(user_obj):
 
 #delete user
 def deleteUser(scim_url, access_token, email):
-	print DELETING_USER_PROMPT + email
+	print (DELETING_USER_PROMPT + email)
 	oldRecord = getResourceFromEmail(scim_url, access_token, email)
 	if not oldRecord:
-		print ERROR_RECORD_NOT_FOUND + email
+		print (ERROR_RECORD_NOT_FOUND + email)
 		return False
 	url = scim_url + USERS_RESOURCE_SUFFIX + HTTP_DELIM + str(oldRecord[FIELD_ID])
 	result = requests.delete(url, headers=getHeaders(access_token),)
-	print str(result.status_code) + ':' + result.reason
+	print (str(result.status_code) + ':' + result.reason)
 	return result.status_code == RESPONSE_OK
 
 #update user
 def updateUser(scim_url, access_token, newFields):
 	email = newFields.get(csv_header.EMAIL_HEADER, None)
 	if email is None:
-		print ERROR_NEWFIELDS_INVALID_FORMAT + csv_header.UPDATE_HEADERS
+		print (ERROR_NEWFIELDS_INVALID_FORMAT + csv_header.UPDATE_HEADERS)
 		return False
-	print UPDATING_USER_PROMPT + email
+	print (UPDATING_USER_PROMPT + email)
 	oldRecord = getResourceFromEmail(scim_url, access_token, email)
 	if not oldRecord:
-		print ERROR_RECORD_NOT_FOUND+ email
+		print (ERROR_RECORD_NOT_FOUND+ email)
 		return False
 	newFields = buildUserJSONObj(newFields)
 	newUserObj = mergeUserObjs(oldRecord,newFields)
 	newUserJSON = json.dumps(newUserObj)
 	url = scim_url + USERS_RESOURCE_SUFFIX + HTTP_DELIM + str(oldRecord[FIELD_ID])
 	result = requests.put(url, headers=getHeaders(access_token), data=newUserJSON)
-	print str(result.status_code) + RESULT_STATUS_DELIM + result.reason
+	print (str(result.status_code) + RESULT_STATUS_DELIM + result.reason)
 	return result.status_code == RESPONSE_OK
 
 def updateManager(scim_url, access_token, employeeEmail, managerEmail):
@@ -126,10 +126,10 @@ def updateManager(scim_url, access_token, employeeEmail, managerEmail):
 	employeeRecord = getResourceFromEmail(scim_url, access_token, employeeEmail)
 	managerRecord = getResourceFromEmail(scim_url, access_token, managerEmail)
 	if not managerRecord:
-		print ERROR_RECORD_NOT_FOUND + managerEmail
+		print (ERROR_RECORD_NOT_FOUND + managerEmail)
 		return False
 	if not employeeRecord:
-		print ERROR_RECORD_NOT_FOUND + employeeEmail
+		print (ERROR_RECORD_NOT_FOUND + employeeEmail)
 		return False
 	managerUpdate[FIELD_MANAGER_ID] = str(managerRecord[FIELD_ID])
 	return updateUser(scim_url, access_token, managerUpdate)
@@ -150,14 +150,14 @@ def getUsers(scim_url, access_token, startIndex, userCollection):
 	result_json = json.loads(result.text, result.encoding)
 	totalResults = result_json[FIELD_TOTAL_RESULTS]
 	itemsPerPage = result_json[FIELD_ITEMS_PER_PAGE]
-	print str((startIndex + itemsPerPage) - 1) + EXPORT_RESULT_DELIM + str(totalResults)
+	print (str((startIndex + itemsPerPage) - 1) + EXPORT_RESULT_DELIM + str(totalResults))
 
 	# Check if JSON is valid
 	if result.status_code != RESPONSE_OK or FIELD_RESOURCES not in result_json:
 		if FIELD_ERROR in result_json and FIELD_MESSAGE in result_json[FIELD_ERROR]:
-			print ERROR_WITH_MESSAGE_PREFIX, result_json[FIELD_ERROR][FIELD_MESSAGE]
+			print (ERROR_WITH_MESSAGE_PREFIX, result_json[FIELD_ERROR][FIELD_MESSAGE])
 		else:
-			print ERROR_WITHOUT_MESSAGE
+			print (ERROR_WITHOUT_MESSAGE)
 		return None
 	userCollection = userCollection + result_json[FIELD_RESOURCES]
 	if itemsPerPage + startIndex <= totalResults:
