@@ -82,7 +82,8 @@ def getUserIDFromEmail(access_token, community_id, email):
 def buildHeader(access_token):
     return {'Authorization': 'Bearer ' + access_token}
 
-def exportGroupMemgers(filename, data):
+def exportGroupMemgers(filename, access_token, group_id):
+    data = getGroupMembers(access_token, group_id)
     workbook = xlsxwriter.Workbook(filename)
     worksheet = workbook.add_worksheet()
     row = 0
@@ -98,4 +99,4 @@ def exportGroupMemgers(filename, data):
 access_token = ''
 community_id = ''
 group_id = ''
-grouplist = getGroupMembers(access_token, group_id)
+exportGroupMemgers('FIS.xlsx', access_token, group_id)
