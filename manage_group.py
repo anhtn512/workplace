@@ -7,7 +7,9 @@
 import requests
 import json
 import xlsxwriter
+from time import sleep
 from csv_header import *
+from scim_sdk import *
 # Constants
 GRAPH_URL_PREFIX = 'https://graph.facebook.com/'
 FIELDS_CONJ = '?limit=1000&fields='
@@ -89,14 +91,31 @@ def exportGroupMemgers(filename, access_token, group_id):
     row = 0
     col = 0
     worksheet.write_row(row, col, tuple(GROUP_HEADER))
+    total = len(data)
+    success = 0
+    error = 0
     for i in data:
+        temp = None
+        while temp == None:
+            try:
+                temp = getResourceFromEmail(scim_url, access_token, i['email'])
+            except:
+                sleep(5)
+        if temp['active'] == False:
+            print(data.index(i), " ",  temp)
+            error += 1
+            continue
         row += 1
+        success += 1
         row_data = [i['name'], i['email'], i['id']]
         worksheet.write_row(row, col, tuple(row_data))
     workbook.close()
+    print('total: ', total, ' success: ', success, ' error: ', error)
+
 
 # Example of creating a CSV of group members
+scim_url = 'https://www.facebook.com/company/1518689971766249/scim/v1/'
 access_token = ''
-community_id = ''
-group_id = ''
-exportGroupMemgers('FIS.xlsx', access_token, group_id)
+community_id = '1518689971766249'
+group_id = '354494111674428'
+exportGroupMemgers('FIS_GOM_GACH_XAY_NHA.xlsx', access_token, group_id)

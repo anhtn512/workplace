@@ -9,6 +9,7 @@ import csv_header
 import json
 import urllib
 import collections
+import urllib.parse
 
 #general constants
 FIRST_ITEM = 0
@@ -135,7 +136,7 @@ def updateManager(scim_url, access_token, employeeEmail, managerEmail):
 	return updateUser(scim_url, access_token, managerUpdate)
 
 def getResourceFromEmail(scim_url, access_token, email):
-	url = scim_url +  USERS_RESOURCE_SUFFIX + EMAIL_LOOKUP_SUFFIX + urllib.quote(ESCAPED_EMAIL_LOOKUP_PREFIX + email + ESCAPED_EMAIL_LOOKUP_SUFFIX, safe='')
+	url = scim_url +  USERS_RESOURCE_SUFFIX + EMAIL_LOOKUP_SUFFIX + urllib.parse.quote(ESCAPED_EMAIL_LOOKUP_PREFIX + email + ESCAPED_EMAIL_LOOKUP_SUFFIX, safe='')
 	result = requests.get(url, headers=getHeaders(access_token))
 	resultObj = json.loads(result.text)
 	if resultObj[FIELD_RESOURCES] and len(resultObj[FIELD_RESOURCES]) > 0:
